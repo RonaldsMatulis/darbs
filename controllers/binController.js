@@ -45,3 +45,19 @@ exports.updateBinStatus = async (req, res) => {
     res.status(500).send({ message: 'Kļūda atjauninot tvertnes statusu' });
   }
 };
+const Bin = require('../models/binModel');
+
+exports.reportBin = async (req, res) => {
+  try {
+    const { location, status } = req.body;
+    const newBin = new Bin({ location, status });
+    await newBin.save();
+    res.status(201).send(newBin);
+
+    // Sūtīt reāllaika atjauninājumu
+    const io = req.app.locals.io;
+    io.emit('binReported', newBin);
+  } catch (error) {
+    res.status(500).send({ message: 'Kļūda ziņojot par tvertni' });
+  }
+};
