@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const User = require('../models/userModel');
+const Bin = require('../models/binModel');
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -26,5 +27,24 @@ exports.notifyAdmins = async (message) => {
 };
 
 exports.sendDailyNotifications = async () => {
-  // Šeit varētu ieviest loģiku, lai sūtītu ikdienas paziņojumus lietotājiem
+  try {
+    const users = await User.find();
+    const bins = await Bin.find();
+
+    users.forEach(user => {
+      let personalizedMessage = 'Šodienas atkritumu savākšanas ziņojums:\n\n';
+      bins.forEach(bin => {
+        personalizedMessage += `Tvertne: ${bin.location}, Statuss: ${bin.status}\n`;
+      });
+
+      transporter.sendMail({
+        from: 'your-email@gmail.com',
+        to: user.email,
+        subject: 'Dienas atkritumu savākšanas ziņojums',
+        text: personalizedMessage
+      });
+    });
+  } catch (error) {
+    console.log('Kļūda sūtot ikdienas paziņojumus:', error);
+  }
 };
